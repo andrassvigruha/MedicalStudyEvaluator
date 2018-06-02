@@ -3,6 +3,8 @@ package ui.swing.main;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Rectangle;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 import javax.swing.JTable;
@@ -24,6 +26,7 @@ public class MainTable extends JTable {
 
     // members
     private final MainTableModel model = new MainTableModel();
+    private final MainTablePopup popup = new MainTablePopup(this);
 
     public MainTable() {
         setModel(model);
@@ -31,6 +34,21 @@ public class MainTable extends JTable {
         getTableHeader().setReorderingAllowed(false);
         getTableHeader().setResizingAllowed(true);
         createMatrix(5, 5);
+        addMouseListener(new MouseAdapter() {
+            @Override public void mousePressed(MouseEvent e) {
+                showPopupIfNeeded(e);
+            }
+            @Override public void mouseReleased(MouseEvent e) {
+                showPopupIfNeeded(e);
+            }
+            
+            private void showPopupIfNeeded(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    popup.show(e.getComponent(),
+                               e.getX(), e.getY());
+                }
+            }
+        });
     }
 
     public Matrix getMatrix() {
@@ -49,6 +67,26 @@ public class MainTable extends JTable {
 
     public void editMatrix(int rowNum, int colNum) {
         model.editMatrix(rowNum, colNum);
+        redraw();
+    }
+
+    public void addRow(int index) {
+        model.addRow(index);
+        redraw();
+    }
+
+    public void deleteRow(int index) {
+        model.deleteRow(index);
+        redraw();
+    }
+    
+    public void addColumn(int index) {
+        model.addColumn(index);
+        redraw();
+    }
+    
+    public void deleteColumn(int index) {
+        model.deleteColumn(index);
         redraw();
     }
 

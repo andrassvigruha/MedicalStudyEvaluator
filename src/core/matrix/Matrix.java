@@ -42,6 +42,74 @@ public class Matrix {
         }
     }
 
+    public void addRow(int index) {
+        Object[][] newData = new Object[++rows][cols];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (i < index) {
+                    newData[i][j] = data[i][j];
+                } else if (i == index) {
+                    if (i > 0) {
+                        newData[i][j] = Evaluation.NONE;
+                    } else {
+                        newData[i][j] = null;
+                    }
+                } else {
+                    newData[i][j] = data[i - 1][j];
+                }
+            }
+        }
+        data = newData;
+    }
+
+    public void deleteRow(int index) {
+        Object[][] newData = new Object[--rows][cols];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (i < index) {
+                    newData[i][j] = data[i][j];
+                } else {
+                    newData[i][j] = data[i + 1][j];
+                }
+            }
+        }
+        data = newData;
+    }
+
+    public void addColumn(int index) {
+        Object[][] newData = new Object[rows][++cols];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (j < index) {
+                    newData[i][j] = data[i][j];
+                } else if (j == index) {
+                    if (j > 0) {
+                        newData[i][j] = Evaluation.NONE;
+                    } else {
+                        newData[i][j] = null;
+                    }
+                } else {
+                    newData[i][j] = data[i][j - 1];
+                }
+            }
+        }
+        data = newData;
+    }
+    
+    public void deleteColumn(int index) {
+        Object[][] newData = new Object[rows][--cols];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (j < index) {
+                    newData[i][j] = data[i][j];
+                } else {
+                    newData[i][j] = data[i][j + 1];
+                }
+            }
+        }
+        data = newData;
+    }
+
     public Object getValueAt(int row, int col) {
         return data[row][col];
     }

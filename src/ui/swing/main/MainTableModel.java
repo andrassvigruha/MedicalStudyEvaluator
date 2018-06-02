@@ -1,9 +1,11 @@
 package ui.swing.main;
 
+import javax.swing.JLabel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
 import core.matrix.Matrix;
+import ui.settings.Settings;
 
 public class MainTableModel extends AbstractTableModel {
 
@@ -28,6 +30,22 @@ public class MainTableModel extends AbstractTableModel {
         } else {
             createMatrix(rowNum, colNum);
         }
+    }
+
+    public void addRow(int index) {
+        matrix.addRow(index);
+    }
+
+    public void deleteRow(int index) {
+        matrix.deleteRow(index);
+    }
+    
+    public void addColumn(int index) {
+        matrix.addColumn(index);
+    }
+    
+    public void deleteColumn(int index) {
+        matrix.deleteColumn(index);
     }
 
     @Override public int getRowCount() {
@@ -59,8 +77,13 @@ public class MainTableModel extends AbstractTableModel {
     }
     
     public static int translateRowIndex(TableModel model, int row) {
-        return row == model.getRowCount() - 1
-            ? 0
-            : row + 1;
+        int alignment = Integer.valueOf(Settings.instance().properties().getProperty(Settings.CRITERIA_ROW_ALIGNMENT));
+        if (alignment == JLabel.BOTTOM) {
+            return row == model.getRowCount() - 1
+                ? 0
+                : row + 1;
+        } else {
+            return row;
+        }
     }
 }

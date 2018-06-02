@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
+import javax.swing.JLabel;
+
 public class Settings {
 
     // constants
@@ -18,6 +20,9 @@ public class Settings {
     public static final String FONT_SIZE = "fontsize";
     public static final String FONT_TYPE = "fonttype";
     public static final String FONT_ROTATE = "fontrotate";
+    public static final String STUDY_CELL_ALIGNMENT = "stdcellagmt";
+    public static final String CRITERIA_CELL_ALIGNMENT = "crtcellagmt";
+    public static final String CRITERIA_ROW_ALIGNMENT = "crtrowagmt";
     public static final String SNAPSHOT_BORDERS = "snapborders";
     
     // instance
@@ -44,6 +49,9 @@ public class Settings {
         DEFAULTS.put(FONT_SIZE, Integer.toString(12));
         DEFAULTS.put(FONT_TYPE, "Calibri");
         DEFAULTS.put(FONT_ROTATE, Integer.toString(0));
+        DEFAULTS.put(STUDY_CELL_ALIGNMENT, Integer.toString(JLabel.LEFT));
+        DEFAULTS.put(CRITERIA_CELL_ALIGNMENT, Integer.toString(JLabel.CENTER));
+        DEFAULTS.put(CRITERIA_ROW_ALIGNMENT, Integer.toString(JLabel.BOTTOM));
         DEFAULTS.put(SNAPSHOT_BORDERS, Boolean.toString(true));
     }
 

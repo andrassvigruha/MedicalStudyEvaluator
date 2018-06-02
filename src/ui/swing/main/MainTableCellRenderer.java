@@ -29,7 +29,7 @@ import ui.swing.palette.Palettes;
 public class MainTableCellRenderer extends DefaultTableCellRenderer {
 
     // constants
-    private static final int MARGIN = 6;
+    private static final int MARGIN = 3;
 
     // members
     private final Palettes palettes;
@@ -41,45 +41,74 @@ public class MainTableCellRenderer extends DefaultTableCellRenderer {
     }
 
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        if (value instanceof Evaluation && palettes != null) {
-            Evaluation evaluation = (Evaluation)value;
-            Image img = palettes.getImage(evaluation);
-            if (img != null) {
-                JLabel icon = new JLabel(new ImageIcon(img));
-                if (icon != null) {
-                    adjustRowHeightIfNeeded(table, row, img.getHeight(null) + MARGIN);
-                    adjustColWidthIfNeeded(table, column, img.getWidth(null) + MARGIN);
-                }
-                return icon;
-            } else {
-                value = evaluation != Evaluation.NONE ? evaluation.displayString() : "";
-                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            }
+        Component ret = null;
+        if (value instanceof Evaluation) {
+            ret = renderEvaluation(table, (Evaluation)value, isSelected, hasFocus, row, column);
+        } else if (column == 0) {
+            ret = renderStudy(table, value, isSelected, hasFocus, row, column);
+        } else if (MainTableModel.translateRowIndex(table.getModel(), row) == 0) {
+            ret = renderCriteria(table, value, isSelected, hasFocus, row, column);
         } else {
-            int angle = Integer.valueOf(Settings.instance().properties().getProperty(Settings.FONT_ROTATE));
-            if (angle > 0 && angle < 360 && MainTableModel.translateRowIndex(table.getModel(), row) == 0 && value != null && !value.toString().isEmpty()) {
-                return new RotatedLabel(table, row, value.toString(), angle);
-            }
-            FontMetrics fm = getFontMetrics(table.getFont());
-            if (value != null && !((String)value).isEmpty()) {
-                adjustRowHeightIfNeeded(table, row, fm.getHeight());
-                adjustColWidthIfNeeded(table, column, fm.stringWidth(value.toString()));
-            }
-            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        }
-        if (MainTableModel.translateRowIndex(table.getModel(), row) == 0) {
-            setHorizontalAlignment(JLabel.CENTER);
-        } else {
-            setHorizontalAlignment(JLabel.LEFT);
+            ret = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         }
         setBackground(Color.WHITE);
         setBorder(noFocusBorder);
-        return this;
+        return ret;
     }
 
     public void reset() {
         maxRowHeight.clear();
         columnWidths.clear();
+    }
+    
+    private Component renderEvaluation(JTable table, Evaluation evaluation, boolean isSelected, boolean hasFocus, int row, int column) {
+        Component ret = null;
+        if (palettes != null) {
+            Image img = palettes.getImage(evaluation);
+            if (img != null) {
+                JLabel icon = new JLabel(new ImageIcon(img));
+                if (icon != null) {
+                    adjustRowHeightIfNeeded(table, row, img.getHeight(null) + MARGIN * 2);
+                    adjustColWidthIfNeeded(table, column, img.getWidth(null) + MARGIN * 2);
+                }
+                ret = icon;
+            }
+        }
+        if (ret == null) {
+            String value = evaluation != Evaluation.NONE ? evaluation.displayString() : "";
+            ret = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        }
+        return ret;
+    }
+    
+    private Component renderStudy(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        Component ret = null;
+        if (!isNull(value)) {
+            FontMetrics fm = getFontMetrics(table.getFont());
+            adjustRowHeightIfNeeded(table, row, fm.getHeight());
+            adjustColWidthIfNeeded(table, column, fm.stringWidth(value.toString()));
+            setAlignment(Integer.valueOf(Settings.instance().properties().getProperty(Settings.STUDY_CELL_ALIGNMENT)));
+        }
+        ret = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        return ret;
+    }
+    
+    private Component renderCriteria(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        Component ret = null;
+        int angle = Integer.valueOf(Settings.instance().properties().getProperty(Settings.FONT_ROTATE));
+        int alignment = Integer.valueOf(Settings.instance().properties().getProperty(Settings.CRITERIA_CELL_ALIGNMENT));
+        if (angle > 0 && angle < 360 && MainTableModel.translateRowIndex(table.getModel(), row) == 0 && value != null && !value.toString().isEmpty()) {
+            ret = new RotatedLabel(table, row, value.toString(), angle, alignment);
+        }
+        if (ret == null) {
+            if (!isNull(value)) {
+                FontMetrics fm = getFontMetrics(table.getFont());
+                adjustRowHeightIfNeeded(table, row, fm.getHeight());
+                setAlignment(alignment);
+            }
+            ret = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        }
+        return ret;
     }
     
     private void adjustRowHeightIfNeeded(JTable table, int row, int height) {
@@ -106,6 +135,31 @@ public class MainTableCellRenderer extends DefaultTableCellRenderer {
         }
     }
     
+    private void setAlignment(int alignment) {
+        switch (alignment) {
+            case (JLabel.CENTER):
+                setHorizontalAlignment(JLabel.CENTER);
+                setVerticalAlignment(JLabel.CENTER);
+            break;
+            case (JLabel.TOP):
+                setHorizontalAlignment(JLabel.CENTER);
+                setVerticalAlignment(JLabel.TOP);
+            break;
+            case (JLabel.LEFT):
+                setHorizontalAlignment(JLabel.LEFT);
+                setVerticalAlignment(JLabel.CENTER);
+            break;
+            case (JLabel.BOTTOM):
+                setHorizontalAlignment(JLabel.CENTER);
+                setVerticalAlignment(JLabel.BOTTOM);
+            break;
+            case (JLabel.RIGHT):
+                setHorizontalAlignment(JLabel.RIGHT);
+                setVerticalAlignment(JLabel.CENTER);
+            break;
+        }
+    }
+    
     private static void adjustColWidth(JTable table, int width) {
         TableColumnModel colModel = table.getColumnModel();
         int colCount = colModel.getColumnCount();
@@ -117,6 +171,10 @@ public class MainTableCellRenderer extends DefaultTableCellRenderer {
         }
     }
     
+    private static boolean isNull(Object value) {
+        return value == null || value.toString().isEmpty();
+    }
+    
     private class RotatedLabel extends JPanel {
         
         // members
@@ -124,55 +182,113 @@ public class MainTableCellRenderer extends DefaultTableCellRenderer {
         private final int row;
         private final String str;
         private final int angle;
+        private final int alignment;
         
-        private RotatedLabel(JTable table, int row, String str, int angle) {
+        private RotatedLabel(JTable table, int row, String str, int angle, int alignment) {
             this.table = table;
             this.row = row;
             this.str = str;
             this.angle = angle;
+            this.alignment = alignment;
         }
         
-        @Override public void paint(Graphics g) {
+        @Override public void paintComponent(Graphics g) {
             final Graphics2D g2d = (Graphics2D)g;
-            final Rectangle rect = getBounds();
             final Font font = table.getFont();
             final FontRenderContext frc = g2d.getFontRenderContext();
             final TextLayout layout = new TextLayout(str, font, frc);
             final int sw = (int)layout.getBounds().getWidth();
             final int sh = (int)layout.getBounds().getHeight();
+            final Rectangle rect = translateRectange(getBounds(), sw, sh);
             final AffineTransform at = new AffineTransform();
-            
-            at.translate(rect.width / 2 + rect.getX(), rect.height / 2 + rect.getY());
+
+            at.translate(rect.width, rect.height);
             at.rotate(Math.toRadians(angle), 0, 0);
             
-            g2d.setFont(font);
+            g2d.setFont(table.getFont());
             g2d.setColor(table.getForeground());
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2d.setTransform(at);
+            g2d.transform(at);
             g2d.drawString(str, -sw / 2, sh / 2);
-            g2d.dispose();
             
-            adjustRowHeightIfNeeded(table, row, cellHeight(sw, sh));
+            adjustRowHeightIfNeeded(table, row, textHeight(sw, sh) + MARGIN * 2);
         }
     
-        private int cellHeight(int sw, int sh) {
+        private Rectangle translateRectange(Rectangle rect, int sw, int sh) {
+            Rectangle transRect;
+            int width;
+            int height;
+            switch (alignment) {
+                case JLabel.CENTER:
+                    width = rect.width / 2;
+                    height = rect.height / 2;
+                    transRect = new Rectangle(width, height);
+                break;
+                case JLabel.TOP:
+                    width = rect.width / 2;
+                    height = textHeight(sw, sh) / 2 + MARGIN;
+                    transRect = new Rectangle(width, height);
+                break;
+                case JLabel.LEFT:
+                    width = textWidth(sw, sh) / 2 + MARGIN;
+                    height = rect.height / 2;
+                    transRect = new Rectangle(width, height);
+                break;
+                case JLabel.BOTTOM:
+                    width = rect.width / 2;
+                    height = rect.height - (textHeight(sw, sh) / 2 + MARGIN);
+                    transRect = new Rectangle(width, height);
+                break;
+                case JLabel.RIGHT:
+                    width = rect.width - (textWidth(sw, sh) / 2 + MARGIN);
+                    height = rect.height / 2;
+                    transRect = new Rectangle(width, height);
+                break;
+                default:
+                    transRect = rect;
+            }
+            return transRect;
+        }
+        
+        private int textHeight(int sw, int sh) {
             if (angle == 180) {
-                return sh + MARGIN;
+                return sh;
             }
             else if (angle == 90 || angle == 270) {
-                return sw + MARGIN;
+                return sw;
             }
             else if (angle < 90) {
-                return (int) Math.round(sw * Math.sin(Math.toRadians(angle))) + (int) Math.round(sh * Math.cos(Math.toRadians(angle))) + MARGIN;
+                return (int) Math.round(sw * Math.sin(Math.toRadians(angle))) + (int) Math.round(sh * Math.cos(Math.toRadians(angle)));
             }
             else if (angle < 180) {
-                return (int) Math.round(sh * Math.sin(Math.toRadians(angle - 90))) + (int) Math.round(sw * Math.cos(Math.toRadians(angle - 90))) + MARGIN;
+                return (int) Math.round(sh * Math.sin(Math.toRadians(angle - 90))) + (int) Math.round(sw * Math.cos(Math.toRadians(angle - 90)));
             }
             else if (angle < 270) {
-                return (int) Math.round(sw * Math.sin(Math.toRadians(angle - 180))) + (int) Math.round(sh * Math.cos(Math.toRadians(angle - 180))) + MARGIN;
+                return (int) Math.round(sw * Math.sin(Math.toRadians(angle - 180))) + (int) Math.round(sh * Math.cos(Math.toRadians(angle - 180)));
             }
             else {
-                return (int) Math.round(sh * Math.sin(Math.toRadians(angle - 270))) + (int) Math.round(sw * Math.cos(Math.toRadians(angle - 270))) + MARGIN;
+                return (int) Math.round(sh * Math.sin(Math.toRadians(angle - 270))) + (int) Math.round(sw * Math.cos(Math.toRadians(angle - 270)));
+            }
+        }
+        
+        private int textWidth(int sw, int sh) {
+            if (angle == 180) {
+                return sw;
+            }
+            else if (angle == 90 || angle == 270) {
+                return sh;
+            }
+            else if (angle < 90) {
+                return (int) Math.round(sw * Math.cos(Math.toRadians(angle))) + (int) Math.round(sh * Math.sin(Math.toRadians(angle)));
+            }
+            else if (angle < 180) {
+                return (int) Math.round(sh * Math.cos(Math.toRadians(angle - 90))) + (int) Math.round(sw * Math.sin(Math.toRadians(angle - 90)));
+            }
+            else if (angle < 270) {
+                return (int) Math.round(sw * Math.cos(Math.toRadians(angle - 180))) + (int) Math.round(sh * Math.sin(Math.toRadians(angle - 180)));
+            }
+            else {
+                return (int) Math.round(sh * Math.cos(Math.toRadians(angle - 270))) + (int) Math.round(sw * Math.sin(Math.toRadians(angle - 270)));
             }
         }
     }
